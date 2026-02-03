@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سينما قيس - عرض لرهف</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;700;900&display=swap" rel="stylesheet">
+    
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #050505;
+            font-family: 'Tajawal', sans-serif;
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            color: white;
+        }
+
+        .force-hidden { display: none !important; }
+
+        /* ستائر حمراء رومانسية */
+        .curtain-layer {
+            position: fixed;
+            top: 0;
+            width: 51%;
+            height: 100%;
+            background: repeating-linear-gradient(90deg, #5e0000 0px, #8e0000 40px, #4a0000 80px);
+            z-index: 50;
+            transition: transform 3s cubic-bezier(0.77, 0, 0.175, 1);
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.8);
+        }
+        
+        .curtain-left { left: 0; transform-origin: left; border-right: 2px solid #300; }
+        .curtain-right { right: 0; transform-origin: right; border-left: 2px solid #300; }
+
+        .open-left { transform: translateX(-100%); }
+        .open-right { transform: translateX(100%); }
+
+        /* الشاشة */
+        .cinema-wrapper {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            background: radial-gradient(circle at center, #1a0505 0%, #000000 100%);
+        }
+
+        .giant-screen {
+            width: 95%;
+            height: 85%;
+            background-color: #000;
+            border: 8px solid #333;
+            border-radius: 12px;
+            box-shadow: 0 0 0 2px #222, 0 20px 60px rgba(255, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        .text-content {
+            opacity: 0;
+            transform: scale(0.9);
+            transition: all 1.2s ease-in-out;
+            padding: 20px;
+            width: 100%;
+        }
+        
+        .text-visible {
+            opacity: 1;
+            transform: scale(1);
+        }
+
+        .screen-on {
+            box-shadow: 0 0 80px rgba(255, 105, 180, 0.15); /* توهج وردي خافت */
+        }
+
+        /* لافتة */
+        .neon-sign-box {
+            position: absolute;
+            top: 3%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 100;
+            opacity: 0;
+            transition: opacity 2s;
+        }
+
+        .neon-text {
+            color: #fff;
+            text-shadow: 0 0 10px #ff0055, 0 0 20px #ff0055, 0 0 40px #ff0055;
+            font-size: 2rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        /* زر البداية */
+        .start-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: opacity 1s;
+        }
+
+        .btn-start {
+            background: linear-gradient(45deg, #ff1493, #ff69b4);
+            border: none;
+            padding: 18px 60px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #fff;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 0 30px rgba(255, 20, 147, 0.5);
+            font-family: 'Tajawal', sans-serif;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 20, 147, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 20px rgba(255, 20, 147, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 20, 147, 0); }
+        }
+
+        /* قلوب خلفية متحركة */
+        .floating-heart {
+            position: absolute;
+            color: #ff0055;
+            opacity: 0.3;
+            animation: float 6s infinite ease-in-out;
+            font-size: 2rem;
+            z-index: 5;
+        }
+        @keyframes float {
+            0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+            50% { opacity: 0.5; }
+            100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- لافتة -->
+    <div class="neon-sign-box" id="sign">
+        <h1 class="neon-text">❤️ سينما قيس ❤️</h1>
+    </div>
+
+    <!-- الستائر -->
+    <div class="curtain-layer curtain-left" id="c-left"></div>
+    <div class="curtain-layer curtain-right" id="c-right"></div>
+
+    <!-- شاشة البداية -->
+    <div class="start-overlay" id="intro">
+        <div class="text-center mb-10">
+            <h2 class="text-pink-500 text-2xl mb-2 font-medium">عرض خاص وحصري</h2>
+            <h1 class="text-5xl md:text-7xl font-bold text-white mb-4">لحبيبتي رهف</h1>
+            <div class="w-24 h-1 bg-pink-600 mx-auto rounded mb-4"></div>
+            <p class="text-gray-400 text-sm">إعداد وتصميم: قيس جازي</p>
+        </div>
+        <button class="btn-start" onclick="startMovie()">دخول ❤️</button>
+    </div>
+
+    <!-- الشاشة -->
+    <div class="cinema-wrapper">
+        <!-- قلوب خلفية -->
+        <div id="hearts-container"></div>
+
+        <div class="giant-screen" id="screen">
+            <div id="content" class="text-content">
+                <!-- المحتوى -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // هنا يمكنك تعديل رسائل الحب لرهف
+        const scenes = [
+            { title: "أهلاً بكِ..", text: "في سينما قلبي.. حيث أنتِ البطلة الوحيدة" },
+            { title: "رهف.. 🌸", text: "يا أجمل صدفة في عمري.. ويا أحلى هدية من القدر" },
+            { title: "عيونك", text: "هي الشاشة التي أحب أن أشاهد العالم من خلالها" },
+            { title: "وجودك معي", text: "هو السيناريو الذي تمنيت أن أعيشه طوال حياتي" },
+            { title: "أعاهدك", text: "أن أبقى بجانبك.. سنداً وحبيباً ورفيق درب" },
+            { title: "أحبك جداً", text: "إلى ما لا نهاية..<br><br><span class='text-pink-400 text-2xl mt-4 block'>حبيبك: قيس جازي</span>" }
+        ];
+
+        let index = 0;
+        const intro = document.getElementById('intro');
+        const cLeft = document.getElementById('c-left');
+        const cRight = document.getElementById('c-right');
+        const screen = document.getElementById('screen');
+        const content = document.getElementById('content');
+        const sign = document.getElementById('sign');
+
+        // دالة لإنشاء قلوب متحركة
+        function createHearts() {
+            const container = document.getElementById('hearts-container');
+            setInterval(() => {
+                const heart = document.createElement('div');
+                heart.classList.add('floating-heart');
+                heart.innerHTML = '❤';
+                heart.style.left = Math.random() * 100 + 'vw';
+                heart.style.animationDuration = Math.random() * 3 + 4 + 's';
+                heart.style.fontSize = Math.random() * 20 + 20 + 'px';
+                container.appendChild(heart);
+                
+                setTimeout(() => {
+                    heart.remove();
+                }, 7000);
+            }, 800);
+        }
+
+        function startMovie() {
+            createHearts(); // تشغيل القلوب
+            intro.style.opacity = '0';
+            
+            setTimeout(() => {
+                intro.classList.add('force-hidden'); 
+                
+                cLeft.classList.add('open-left');
+                cRight.classList.add('open-right');
+                
+                setTimeout(() => {
+                    screen.classList.add('screen-on');
+                    sign.style.opacity = '1';
+                    playNextScene();
+                }, 2000);
+
+            }, 1000);
+        }
+
+        function playNextScene() {
+            if (index >= scenes.length) return; 
+
+            const current = scenes[index];
+            content.classList.remove('text-visible');
+
+            setTimeout(() => {
+                content.innerHTML = `
+                    <h1 class="text-4xl md:text-6xl font-bold text-pink-500 mb-8 drop-shadow-md leading-tight">${current.title}</h1>
+                    <p class="text-2xl md:text-5xl text-white font-light leading-relaxed max-w-5xl mx-auto">${current.text}</p>
+                `;
+                content.classList.add('text-visible');
+
+                index++;
+
+                if (index < scenes.length) {
+                    setTimeout(playNextScene, 6000); 
+                }
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
+
